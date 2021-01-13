@@ -1,0 +1,17 @@
+version: "3.3"
+
+services:
+
+  sandbox-gcc75-{{ env }}:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+    container_name: sandbox-gcc75-{{ env }}
+    image: sandbox-gcc75-{{ env }}
+    volumes:
+      - ../src:/app/src:ro
+    ports:
+      - "{{ gcc75_public_port|default(8002) }}:8002"
+    restart: on-failure
+    environment:
+      GUNICORN_WORKERS: {{ gcc75_gunicorn_workers|default(1) }}

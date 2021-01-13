@@ -1,0 +1,15 @@
+version: "3.3"
+
+services:
+
+  sandbox-gcc75:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+    container_name: sandbox-gcc75
+    image: sandbox-gcc75
+    volumes:
+      - ../src:/app/src:ro
+    ports:
+      - "8002:8002"
+    restart: on-failure
