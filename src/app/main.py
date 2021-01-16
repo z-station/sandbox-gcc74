@@ -34,7 +34,7 @@ CORS(app, origins=config.CORS_DOMAINS)
 def debug() -> ResponseDebugDict:
 
     data: RequestDebugDict = request.json
-    console_input: str = clear(data.get('translator_console_input', ''))
+    console_input: str = clear(data.get('translator_console_input'))
     code: str = clear(data['code'])
 
     result = ResponseDebugDict()
@@ -52,72 +52,61 @@ def debug() -> ResponseDebugDict:
     compile_result.file.remove()
     return result
 
-#
-# @app.route('/testing/', methods=['post'])
-# def testing() -> ResponseTestingDict:
-#
-#     data: RequestTestingDict = request.json
-#     checker_code: str = data['checker_code']
-#     tests: List[RequestTestData] = data['tests_data']
-#     code: str = clear(data['code'])
-#     file = CppFile(code)
-#
-#     tests_data = []
-#     num_ok = 0
-#     args = ['c++', file.filepath_cpp, '-o', file.filepath_out],
-#     ok = False
-#     translator_console_output = ''
-#     translator_error_msg = ''
-#     proc = subprocess.Popen(
-#         args=args,
-#         stdout=subprocess.PIPE,
-#         stderr=subprocess.PIPE,
-#     )
-#     try:
-#         stdout, stderr = proc.communicate(
-#             timeout=config.TIMEOUT
-#         )
-#     except subprocess.TimeoutExpired:
-#         translator_error_msg = msg.TIMEOUT
-#         proc.kill()
-#     except Exception as e:
-#         translator_error_msg = f'Неожиданное исключение: {e}'
-#         proc.kill()
-#     else:
-#         for test in tests:
-#             test_console_input = clear(test['test_console_input'])
-#             test_console_output = clear(test['test_console_output'])
-#
-#             translator_console_output, translator_error_msg = process_translator_response(
-#                     stdout=stdout,
-#                     stderr=stderr
-#                 )
-#                 if not translator_error_msg:
-#                     ok = run_checker(
-#                         checker_code=checker_code,
-#                         test_console_output=test_console_output,
-#                         translator_console_output=translator_console_output
-#                     )
-#                     if ok is None:
-#                         translator_error_msg = msg.CHECKER_ERROR
-#                 if ok:
-#                     num_ok += 1
-#
-#             tests_data.append(
-#                 ResponseTestData(
-#                     test_console_input=test_console_input,
-#                     test_console_output=test_console_output,
-#                     translator_console_output=translator_console_output,
-#                     translator_error_msg=translator_error_msg,
-#                     ok=ok
-#                 )
-#             )
-#
-#     file.remove()
-#     num = len(tests)
-#     return ResponseTestingDict(
-#         num=num,
-#         num_ok=num_ok,
-#         ok=num == num_ok,
-#         tests_data=tests_data
-#     )
+
+@app.route('/testing/', methods=['post'])
+def testing() -> ResponseTestingDict:
+
+    data: RequestTestingDict = request.json
+    code: str = clear(data['code'])
+    tests: List[RequestTestData] = data['tests_data']
+    checker_code: str = data['checker_code']
+
+    result = ResponseTestingDict(
+        num=len(tests),
+        num_ok=0,
+        ok=False,
+        tests_data=[]
+    )
+    compile_result = compile_code(code)
+    if compile_result.error_msg:
+        for test in tests:
+            result['tests_data'].append(
+                ResponseTestData(
+                    test_console_input=test['test_console_input'],
+                    test_console_output=test['test_console_output'],
+                    translator_console_output=None,
+                    translator_error_msg=compile_result.error_msg,
+                    ok=False
+                )
+            )
+    else:
+        for test in tests:
+            response_test_data = ResponseTestData(
+                test_console_input=test['test_console_input'],
+                test_console_output=test['test_console_output'],
+                translator_console_output=None,
+                translator_error_msg=None,
+                ok=False
+            )
+            run_result = run_code(
+                console_input=clear(test['test_console_input']),
+                file=compile_result.file
+            )
+            response_test_data['translator_error_msg'] = run_result.error_msg
+            response_test_data['translator_console_output'] = run_result.console_output
+            if not run_result.error_msg:
+                test_ok = run_checker(
+                    checker_code=checker_code,
+                    test_console_output=clear(test['test_console_output']),
+                    translator_console_output=run_result.console_output
+                )
+                if test_ok is None:
+                    response_test_data['translator_error_msg'] = msg.CHECKER_ERROR
+                elif test_ok:
+                    result['num_ok'] += 1
+                    response_test_data['ok'] = True
+            result['tests_data'].append(response_test_data)
+
+    compile_result.file.remove()
+    result['ok'] = result['num'] == result['num_ok']
+    return result

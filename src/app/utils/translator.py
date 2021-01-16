@@ -1,6 +1,5 @@
-import re
 import subprocess
-from typing import Tuple, Union
+from typing import Union, Optional
 
 from app import config
 from app.entities.translator import (
@@ -44,7 +43,7 @@ def compile_code(code: str) -> CompileResult:
     return result
 
 
-def run_code(console_input: str, file: CppFile):
+def run_code(console_input: Optional[str], file: CppFile):
 
     """ Запускает скомпилирвованный файл и возвращает результат работы программы """
 
