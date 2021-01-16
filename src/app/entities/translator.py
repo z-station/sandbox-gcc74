@@ -1,10 +1,32 @@
+import os
+import uuid
 import re
 from abc import ABC
 from typing import Optional
-
 from dataclasses import dataclass
-from app.utils.file import CppFile
+
 from app.utils import msg
+from app.config import TMP_DIR
+
+
+class CppFile:
+
+    """ Описывает файлы, необходимые для запуска программы """
+
+    def __init__(self, code: str):
+        self.filepath_cpp = os.path.join(TMP_DIR, f'{uuid.uuid4()}.cpp')
+        self.filepath_out = os.path.join(TMP_DIR, f'{uuid.uuid4()}.out')
+        with open(self.filepath_cpp, 'w') as file:
+            file.write(code)
+        with open(self.filepath_out, 'w') as _:
+            pass
+
+    def remove(self):
+        try:
+            os.remove(self.filepath_cpp)
+            os.remove(self.filepath_out)
+        except:
+            pass
 
 
 @dataclass
@@ -47,11 +69,15 @@ class BaseResult(ABC):
 @dataclass
 class CompileResult(BaseResult):
 
+    """ Описывает результат компиляции кода программы"""
+
     file: CppFile = None
 
 
 @dataclass
 class RunResult(BaseResult):
+
+    """ Описывает результат запуска программы """
 
     _console_output: Optional[str] = None
 
