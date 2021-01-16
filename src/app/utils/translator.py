@@ -1,6 +1,13 @@
 import re
+import subprocess
 from typing import Tuple, Union
+
+from app import config
+from app.entities.translator import (
+    RunResult, CompileResult
+)
 from app.utils import msg
+from app.utils.file import CppFile
 
 
 def clear(text: str):
@@ -14,30 +21,53 @@ def clear(text: str):
         return text
 
 
-def process_translator_error(stderr: bytes) -> str:
+def compile_code(code: str) -> CompileResult:
 
-    """ Обработка текста сообщения об ошибке """
+    """ Компилирует код и возвращает результат """
 
-    result = clear(
-        re.sub(pattern='.*.[out|cpp]{1}:', repl="", string=stderr.decode())
+    file = CppFile(code)
+    result = CompileResult(file=file)
+    proc = subprocess.Popen(
+        args=['c++', file.filepath_cpp, '-o', file.filepath_out],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
     )
-    if 'Terminated' in result:
-        return msg.TIMEOUT
-    elif 'Read-only file system' in result:
-        return msg.READ_ONLY_FS
-    elif 'the monitored command dumped core' in result:
-        return msg.NEED_CONSOLE_INPUT
-    else:
-        return result
+    try:
+        _, result.error_msg = proc.communicate(timeout=config.TIMEOUT)
+    except subprocess.TimeoutExpired:
+        result.error_msg = msg.TIMEOUT
+        proc.kill()
+    except Exception as e:
+        result.error_msg = f'Неожиданное исключение на этапе компиляции : {e}'
+        proc.kill()
+    return result
 
 
-def process_translator_response(stdout: bytes, stderr: bytes) -> Tuple[str, str]:
+def run_code(console_input: str, file: CppFile):
 
-    """ Преобразует bytes (вывод интерпретатора) в unicode, удаляет лишние символы из вывода """
+    """ Запускает скомпилирвованный файл и возвращает результат работы программы """
 
-    output = '' if stdout is None else stdout.decode()
-    error = '' if stderr is None else process_translator_error(stderr)
-    return output, error
+    result = RunResult()
+    proc = subprocess.Popen(
+        args=[file.filepath_out],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    try:
+        result.console_output, result.error_msg = proc.communicate(
+            input=console_input,
+            timeout=config.TIMEOUT
+        )
+    except subprocess.TimeoutExpired:
+        result.error_msg = msg.TIMEOUT
+        proc.kill()
+    except Exception as e:
+        result.error_msg = f'Неожиданное исключение: {e}'
+        proc.kill()
+    return result
 
 
 def run_checker(checker_code: str, **checker_locals) -> Union[bool, None]:

@@ -1,12 +1,14 @@
-from typing import TypedDict, List, Union
+from typing import (
+    TypedDict, List, Union, Optional
+)
 
 
 class ResponseDebugDict(TypedDict):
 
     """ Описывает формат ответа эндпоинта /debug/ """
 
-    translator_console_output: str
-    translator_error_msg: str
+    translator_console_output: Optional[str]
+    translator_error_msg: Optional[str]
 
 
 class ResponseTestData(TypedDict):
