@@ -1,7 +1,7 @@
-import subprocess
 from typing import List
 from flask import Flask, request
 from flask_cors import CORS
+
 from app.entities.request import (
     RequestDebugDict,
     RequestTestData,
@@ -12,19 +12,14 @@ from app.entities.response import (
     ResponseTestData,
     ResponseTestingDict
 )
-from app.entities.translator import (
-    CompileResult,
-    RunResult
-)
-from app.utils.file import CppFile
 from app.utils.translator import (
     clear,
-    run_checker,
     compile_code,
-    run_code
+    run_code,
+    run_test,
+    get_error_test_data
 )
 from app import config
-from app.utils import msg
 
 app = Flask(__name__)
 CORS(app, origins=config.CORS_DOMAINS)
@@ -69,43 +64,20 @@ def testing() -> ResponseTestingDict:
     )
     compile_result = compile_code(code)
     if compile_result.error_msg:
-        for test in tests:
-            result['tests_data'].append(
-                ResponseTestData(
-                    test_console_input=test['test_console_input'],
-                    test_console_output=test['test_console_output'],
-                    translator_console_output=None,
-                    translator_error_msg=compile_result.error_msg,
-                    ok=False
-                )
-            )
+        result['tests_data'] = get_error_test_data(
+            tests=tests,
+            error_msg=compile_result.error_msg
+        )
     else:
         for test in tests:
-            response_test_data = ResponseTestData(
-                test_console_input=test['test_console_input'],
-                test_console_output=test['test_console_output'],
-                translator_console_output=None,
-                translator_error_msg=None,
-                ok=False
+            response_test_data = run_test(
+                test=test,
+                file=compile_result.file,
+                checker_code=checker_code
             )
-            run_result = run_code(
-                console_input=clear(test['test_console_input']),
-                file=compile_result.file
-            )
-            response_test_data['translator_error_msg'] = run_result.error_msg
-            response_test_data['translator_console_output'] = run_result.console_output
-            if not run_result.error_msg:
-                test_ok = run_checker(
-                    checker_code=checker_code,
-                    test_console_output=clear(test['test_console_output']),
-                    translator_console_output=run_result.console_output
-                )
-                if test_ok is None:
-                    response_test_data['translator_error_msg'] = msg.CHECKER_ERROR
-                elif test_ok:
-                    result['num_ok'] += 1
-                    response_test_data['ok'] = True
             result['tests_data'].append(response_test_data)
+            if response_test_data['ok']:
+                result['num_ok'] += 1
 
     compile_result.file.remove()
     result['ok'] = result['num'] == result['num_ok']

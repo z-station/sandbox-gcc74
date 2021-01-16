@@ -1,10 +1,12 @@
 import subprocess
-from typing import Union, Optional
+from typing import Union, Optional, List
 
 from app import config
 from app.entities.translator import (
     RunResult, CompileResult
 )
+from app.entities.request import RequestTestData
+from app.entities.response import ResponseTestData
 from app.utils import msg
 from app.utils.file import CppFile
 
@@ -80,3 +82,55 @@ def run_checker(checker_code: str, **checker_locals) -> Union[bool, None]:
         return None
     else:
         return checker_locals.get('result')
+
+
+def get_error_test_data(
+    error_msg: str,
+    tests: List[RequestTestData]
+) -> List[ResponseTestData]:
+    
+    result = []
+    for test in tests:
+        result.append(
+            ResponseTestData(
+                test_console_input=test['test_console_input'],
+                test_console_output=test['test_console_output'],
+                translator_console_output=None,
+                translator_error_msg=error_msg,
+                ok=False
+            )
+        )
+    return result
+
+
+def run_test(
+    test: RequestTestData,
+    file: CppFile,
+    checker_code: str
+) -> ResponseTestData:
+
+    result = ResponseTestData(
+        test_console_input=test['test_console_input'],
+        test_console_output=test['test_console_output'],
+        translator_console_output=None,
+        translator_error_msg=None,
+        ok=False
+    )
+    run_result = run_code(
+        console_input=clear(test['test_console_input']),
+        file=file
+    )
+    result['translator_error_msg'] = run_result.error_msg
+    result['translator_console_output'] = run_result.console_output
+    if not run_result.error_msg:
+        test_ok = run_checker(
+            checker_code=checker_code,
+            test_console_output=clear(test['test_console_output']),
+            translator_console_output=run_result.console_output
+        )
+        if test_ok is None:
+            result['translator_error_msg'] = msg.CHECKER_ERROR
+        elif test_ok:
+            result['ok'] = True
+
+    return result
