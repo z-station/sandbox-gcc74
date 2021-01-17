@@ -1,10 +1,9 @@
-FROM gcc:7.5
+FROM python:3.8
 
 RUN apt-get update && \
-    apt-get -y install nano && \
+    apt-get -y install nano g++-7 && \
     pip install --upgrade pip && \
-    pip install pipenv && \
-    adduser --gecos --disabled-login --disabled-password --home /sandbox sandbox
+    pip install pipenv
 
 COPY ./src/Pipfile ./src/Pipfile.lock /tmp/
 RUN cd /tmp && pipenv install --deploy --system

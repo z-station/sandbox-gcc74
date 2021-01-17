@@ -2,12 +2,12 @@ version: "3.3"
 
 services:
 
-  sandbox-gcc75:
+  sandbox-gcc74:
     build:
       context: ..
       dockerfile: ./docker/Dockerfile
-    container_name: sandbox-gcc75
-    image: sandbox-gcc75
+    container_name: sandbox-gcc74
+    image: sandbox-gcc74
     volumes:
       - ../src:/app/src:ro
     ports:

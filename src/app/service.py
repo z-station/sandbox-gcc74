@@ -41,7 +41,7 @@ class PythonService:
         file = CppFile(code)
         result = CompileResult(file=file)
         proc = subprocess.Popen(
-            args=['c++', file.filepath_cpp, '-o', file.filepath_out],
+            args=['g++-7', file.filepath_cpp, '-o', file.filepath_out],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
