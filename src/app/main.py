@@ -10,12 +10,12 @@ from app.entities.response import (
     ResponseTestingDict
 )
 from app import config
-from app.service import PythonService
+from app.service import CppService
 
 
 app = Flask(__name__)
 CORS(app, origins=config.CORS_DOMAINS)
-service = PythonService()
+service = CppService()
 
 
 @app.route('/debug/', methods=['post'])

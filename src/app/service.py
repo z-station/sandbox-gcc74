@@ -20,7 +20,7 @@ from app.entities.translator import (
 from app import config
 
 
-class PythonService:
+class CppService:
 
     @staticmethod
     def _clear(text: str):
