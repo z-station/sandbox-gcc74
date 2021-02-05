@@ -11,7 +11,8 @@ services:
     volumes:
       - ../src:/app/src:ro
     ports:
-      - "{{ gcc74_public_port|default(8002) }}:8002"
+      - "{{ gcc74_public_port|default(9002) }}:9002"
     restart: on-failure
     environment:
       GUNICORN_WORKERS: {{ gcc74_gunicorn_workers|default(1) }}
+      CORS_DOMAINS: {{ gcc74_cors_domains }}

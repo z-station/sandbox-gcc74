@@ -11,5 +11,5 @@ services:
     volumes:
       - ../src:/app/src:ro
     ports:
-      - "8002:8002"
+      - "9002:9002"
     restart: on-failure
