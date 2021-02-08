@@ -12,4 +12,10 @@ services:
       - ../src:/app/src:ro
     ports:
       - "9002:9002"
+    networks:
+      - docker_localhost
     restart: on-failure
+
+networks:
+  docker_localhost:
+    external: true
