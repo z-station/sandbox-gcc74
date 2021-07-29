@@ -2,7 +2,7 @@ import os
 from os import environ as env
 from tempfile import gettempdir
 
-TMP_DIR = gettempdir()
+SANDBOX_DIR = env.get('SANDBOX_DIR', gettempdir())
 TIMEOUT = 5  # seconds
 
 CORS_DOMAINS = env.get('CORS_DOMAINS')

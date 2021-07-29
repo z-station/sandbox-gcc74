@@ -1,6 +1,7 @@
 FROM python:3.8
 
 ARG SANDBOX_USER_UID
+ARG SANDBOX_DIR
 
 RUN apt-get update && \
     apt-get -y install nano g++-7 && \
@@ -12,12 +13,13 @@ RUN adduser \
     --gecos \
     --disabled-login \
     --disabled-password \
-    --no-create-home \
+    --home ${SANDBOX_DIR} \
     --uid ${SANDBOX_USER_UID} \
-    sandbox
+    sandbox && \
+    chown root:root ${SANDBOX_DIR}
 
 COPY ./src/Pipfile ./src/Pipfile.lock /tmp/
 RUN cd /tmp && pipenv install --deploy --system
 
-WORKDIR /app/src
+WORKDIR ${SANDBOX_DIR}
 ENTRYPOINT ["./start.sh"]

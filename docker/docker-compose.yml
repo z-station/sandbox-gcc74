@@ -7,19 +7,26 @@ services:
       context: ..
       args:
         - SANDBOX_USER_UID=999
+        - SANDBOX_DIR=/sandbox
       dockerfile: ./docker/Dockerfile
     container_name: sandbox-gcc74
     image: sandbox-gcc74
     volumes:
       - ../src:/app/src
+      - docker_shared_files:/files:ro
     ports:
       - "9002:9002"
     networks:
       - docker_localhost
     environment:
       - SANDBOX_USER_UID=999
+      - SANDBOX_DIR=/sandbox
     restart: on-failure
 
 networks:
   docker_localhost:
+    external: true
+
+volumes:
+  docker_shared_files:
     external: true

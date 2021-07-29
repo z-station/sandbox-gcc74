@@ -6,7 +6,7 @@ from typing import Optional
 from dataclasses import dataclass
 
 from app.utils import msg
-from app.config import TMP_DIR
+from app.config import SANDBOX_DIR
 
 
 class CppFile:
@@ -14,8 +14,8 @@ class CppFile:
     """ Описывает файлы, необходимые для запуска программы """
 
     def __init__(self, code: str):
-        self.filepath_cpp = os.path.join(TMP_DIR, f'{uuid.uuid4()}.cpp')
-        self.filepath_out = os.path.join(TMP_DIR, f'{uuid.uuid4()}.out')
+        self.filepath_cpp = os.path.join(SANDBOX_DIR, f'{uuid.uuid4()}.cpp')
+        self.filepath_out = os.path.join(SANDBOX_DIR, f'{uuid.uuid4()}.out')
         with open(self.filepath_cpp, 'w') as file:
             file.write(code)
         with open(self.filepath_out, 'w') as _:
