@@ -22,4 +22,3 @@ COPY ./src/Pipfile ./src/Pipfile.lock /tmp/
 RUN cd /tmp && pipenv install --deploy --system
 
 WORKDIR ${SANDBOX_DIR}
-ENTRYPOINT ["./start.sh"]
