@@ -22,9 +22,7 @@ services:
       - SANDBOX_USER_UID=999
       - SANDBOX_DIR=/sandbox
     restart: on-failure
-    command: >
-      sh -c "cd /app/src &&
-             gunicorn --bind 0:9002 app.main:app --reload -w 1"
+    command: gunicorn --pythonpath '/app/src' --bind 0:9002 app.main:app --reload -w 1
 
 networks:
   docker_localhost:
