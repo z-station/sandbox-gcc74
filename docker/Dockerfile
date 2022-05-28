@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.8.12-buster
 
 ARG SANDBOX_USER_UID
 ARG SANDBOX_DIR
@@ -19,6 +19,6 @@ RUN adduser \
     chown root:root ${SANDBOX_DIR}
 
 COPY ./src/Pipfile ./src/Pipfile.lock /tmp/
-RUN cd /tmp && pipenv install --deploy --system
+RUN cd /tmp && pipenv install --deploy --dev --system
 
 WORKDIR ${SANDBOX_DIR}

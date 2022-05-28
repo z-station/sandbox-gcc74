@@ -1,41 +1,65 @@
-from flask import Flask, request
-from flask import render_template
-from flask_cors import CORS
-
-from app.entities.request import (
-    RequestDebugDict,
-    RequestTestingDict
+from typing import Union
+from flask import (
+    Flask,
+    request,
+    render_template,
+    abort
 )
-from app.entities.response import (
-    ResponseDebugDict,
-    ResponseTestingDict
+from marshmallow import ValidationError
+from app.service.main import CppService
+from app.schema import (
+    DebugSchema,
+    TestsSchema,
+    BadRequestSchema,
+    ServiceExceptionSchema,
 )
-from app import config
-from app.service import CppService
+from app.service.exceptions import ServiceException
 
 
-app = Flask(__name__)
-# CORS(app, origins=config.CORS_DOMAINS)
-CORS(app)
-service = CppService()
+def create_app():
+
+    app = Flask(__name__)
+
+    @app.errorhandler(400)
+    def bad_request_handler(ex: ValidationError):
+        return BadRequestSchema().dump(ex), 400
+
+    @app.errorhandler(500)
+    def bad_request_handler(ex: ServiceException):
+        return ServiceExceptionSchema().dump(ex), 500
+
+    @app.route('/', methods=['get'])
+    def index():
+        return render_template("index.html")
+
+    @app.route('/debug/', methods=['post'])
+    def debug():
+        schema = DebugSchema()
+        try:
+            data = CppService.debug(
+                schema.load(request.get_json())
+            )
+        except ValidationError as ex:
+            abort(400, ex)
+        except ServiceException as ex:
+            abort(500, ex)
+        else:
+            return schema.dump(data)
+
+    @app.route('/testing/', methods=['post'])
+    def testing():
+        schema = TestsSchema()
+        try:
+            data = CppService.testing(
+                schema.load(request.get_json())
+            )
+        except ValidationError as ex:
+            abort(400, ex)
+        except ServiceException as ex:
+            abort(500, ex)
+        else:
+            return schema.dump(data)
+    return app
 
 
-@app.route('/', methods=['get'])
-def index():
-    return render_template("index.html")
-
-
-@app.route('/debug/', methods=['post'])
-def debug() -> ResponseDebugDict:
-
-    data: RequestDebugDict = request.json
-    result = service.debug(data)
-    return result
-
-
-@app.route('/testing/', methods=['post'])
-def testing() -> ResponseTestingDict:
-
-    data: RequestTestingDict = request.json
-    result = service.testing(data)
-    return result
+app = create_app()
