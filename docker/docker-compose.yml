@@ -13,7 +13,7 @@ services:
     image: sandbox-gcc74
     volumes:
       - ../src:/app/src
-      - shared_files:/files:ro
+      - import:/sandbox/import:ro
     ports:
       - "9002:9002"
     networks:
@@ -29,5 +29,5 @@ networks:
     external: true
 
 volumes:
-  shared_files:
+  import:
     external: true
