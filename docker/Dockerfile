@@ -1,12 +1,14 @@
-FROM python:3.8.12-buster
+FROM python:3.8.12-bullseye
 
 ARG SANDBOX_USER_UID
 ARG SANDBOX_DIR
 
 RUN apt-get update && \
-    apt-get -y install nano g++-7 && \
+    apt-get -y install nano && \
     pip install --upgrade pip && \
     pip install pipenv
+
+RUN apt-get -y install g++-10
 
 RUN adduser \
     --system \

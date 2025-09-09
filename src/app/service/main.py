@@ -26,12 +26,15 @@ class CppService:
     def _compile(cls, file: CppFile) -> Optional[str]:
 
         """ Компилирует код программы """
-        proc = subprocess.Popen(
-            args=['g++-7', file.filepath_cpp, '-o', file.filepath_out],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
+        try:
+            proc = subprocess.Popen(
+                args=['g++-10', file.filepath_cpp, '-o', file.filepath_out],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+        except Exception as ex:
+            raise exceptions.CompileException(details=str(ex))
         try:
             _, error = proc.communicate(timeout=config.TIMEOUT)
         except subprocess.TimeoutExpired:
